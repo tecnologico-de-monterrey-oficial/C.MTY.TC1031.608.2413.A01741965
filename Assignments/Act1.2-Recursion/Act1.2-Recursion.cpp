@@ -95,6 +95,10 @@ int factorialIterative(int n) {
     }
     return result;
 }
+
+int sumFormula(int n) {
+    return n * (n + 1) / 2;
+}
 int main() {
     int a = 5;
     std::cout << "Suma de 1 hasta 5 es: " << sumaIterativa(a) << std::endl;
@@ -114,6 +118,8 @@ int main() {
 
     std::cout << "5!: " << factorialRecursive(5) << std::endl;
     std::cout << "5!: " << factorialIterative(5) << std::endl;
+
+    std::cout << "Suma de 1 hasta 5 es: " << sumFormula(a) << std::endl;
 
     return 0;
 }
