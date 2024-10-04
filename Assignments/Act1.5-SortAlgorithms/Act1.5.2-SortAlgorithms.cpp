@@ -1,16 +1,11 @@
-//Swap and search Algorithms Oscar Cardenas Valdez A01741965
 #include <iostream>
 #include <vector>
 #include <cstdlib>
 #include <ctime>
 #include <chrono>
 
-
-
 using namespace std;
 using namespace std::chrono;
-
-
 
 
 vector<int> generarLista(int tam) {
@@ -20,10 +15,6 @@ vector<int> generarLista(int tam) {
     }
     return lista;
 }
-
-
-
-
 
 // Swap Sort
 void swapSort(vector<int> &arr, int &comparaciones, int &intercambios) {
@@ -39,8 +30,6 @@ void swapSort(vector<int> &arr, int &comparaciones, int &intercambios) {
         }
     }
 }
-
-
 
 // Bubble Sort
 void bubbleSort(vector<int> &arr, int &comparaciones, int &intercambios) {
@@ -171,6 +160,7 @@ void shellSort(vector<int> &arr) {
     }
 }
 
+// Función para mostrar el vector
 void mostrarVector(const vector<int> &arr) {
     for (const int &num : arr) {
         cout << num << " ";
@@ -178,8 +168,9 @@ void mostrarVector(const vector<int> &arr) {
     cout << endl;
 }
 
+// Menú principal
 int main() {
-    srand(time(0));  
+    srand(time(0));  // Inicializar semilla para números aleatorios
     int tam;
     vector<int> lista;
 
@@ -205,7 +196,7 @@ int main() {
             cout << "Lista generada: ";
             mostrarVector(lista);
         } else if (opcion >= 2 && opcion <= 8 && lista.size() > 0) {
-            vector<int> listaCopia = lista;  
+            vector<int> listaCopia = lista;  // Copia para no modificar la original
             auto start = high_resolution_clock::now();
             
             switch (opcion) {
