@@ -1,6 +1,6 @@
-//Create Binary Tree Node
+template <class T>
 struct Bnode {
-    int data;
+    T data;
     Bnode* left;
     Bnode* right;
 };
