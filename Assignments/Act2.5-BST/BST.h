@@ -2,6 +2,10 @@
 #define BST_h
 
 #include "TNode.h"
+#include <queue>
+#include <stack>
+
+
 
 template <class T>
 class BST {
@@ -9,6 +13,12 @@ private:
     TNode<T>* root;
     void printTree(TNode<T>* aux, int level);
     int howManyChildren(TNode<T>* aux);
+    void preOrder(TNode<T>* aux);
+    void inOrder(TNode<T>* aux);
+    void postOrder(TNode<T>* aux);
+    void levelByLevel(TNode<T>* aux);
+    int heightAux(TNode<T>* aux);
+    
 public:
     BST();
     void insert(T data);
@@ -16,6 +26,11 @@ public:
     bool find(T data);
     bool remove(T data);
     bool empty();
+    void visit(int order);
+    int height();
+    void ancestors(T data);
+    int whatLevelAmI(T data);
+    TNode<T>* getRoot() { return root; }
 };
 
 template <class T>
@@ -97,6 +112,8 @@ void BST<T>::insert(T data) {
     }
 }
 
+
+
 template <class T>
 bool BST<T>::find(T data) {
     // creamos una apuntador auxiliar igual a root
@@ -110,40 +127,31 @@ bool BST<T>::find(T data) {
             return true;
         // else
         } else {
-            // no es igual
-            // comparamos si el valor buscado es menor al valor de aux
-            // if (data < aux->data) {
-            //     // si es menor
-            //     // recorremos aux al lado izquierdo
-            //     aux = aux->left;
-            // // else
-            // } else {
-            //     // es mayor o igual
-            //     // recorremos aux al lado derecho
-            //     aux = aux->right;
-            // // endif
-            // }
-            // validamos hacia donde recorremos aux
             data < aux->data ? aux = aux->left : aux = aux->right;
         // endif
         }
-    // endiwhile
+    // endwhile
     }
     return false;
 }
+
+
+
 
 template <class T>
 bool BST<T>::remove(T data) {
     // validamos que el bst no este vacío
     if (!empty()) {
-        // el bst no está vacío
+        // -> el bst no está vacío
         // validamos si el valor a borrar es el valor de root
-        if (root->data == data) {
-            // sí vamos a borrar root
+        if (data == root->data) {
+            // -> sí vamos a borrar root
             // validamos cuantos hijos tiene
-            switch (howManyChildren(root)) {
+            int children = howManyChildren(root);
+            // hacemos un switch con la cantidad de hijos
+            switch (children) {
                 // no tiene hijos
-                case 0:
+                case 0: {
                     // Creamos un apuntador auxiliar igual a root
                     TNode<T>* aux = root;
                     // hacemos root igual a nulos
@@ -152,17 +160,20 @@ bool BST<T>::remove(T data) {
                     delete aux;
                     // Regresamos true
                     return true;
+                }
+                break;
                 // tiene 1 hijo
-                case 1:
+                case 1: {
                     // creamos un apuntador auxiliar igual a root
                     TNode<T>* aux = root;
                     // validamos de que lado está el hijo
-                    if (root->left != nullptr) {
-                        // está del lado izquierdo
+                    if (aux->left != nullptr) {
+                        // -> está del lado izquierdo
                         // apuntamos root al lado izquierdo de root
                         root = root->left;
+                    // else
                     } else {
-                        // está del lado derecho
+                        // -> está del lado derecho
                         // apuntamos root al lado derecho de root
                         root = root->right;
                     }
@@ -170,94 +181,310 @@ bool BST<T>::remove(T data) {
                     delete aux;
                     // regresamos true
                     return true;
+                }
+                break;
                 // tiene 2 hijos
-                case 2:
-                    // pendiente
-                    break;
+                case 2: {
+                    // Creamos un apuntador auxRemove igual a root
+                    TNode<T>* auxRemove = root;
+                    // creamos un apuntador aux igual al apuntador del lado izquierdo de auxRemove
+                    TNode<T>* aux = auxRemove->left;
+                    // Validamos si el apuntador de aux del lado derecho es nulo
+                    if (aux->right == nullptr) {
+                        // -> si es nulo, ya encontramos el más grande del lado izquierdo
+                        // hacemos que el valor de auxRemove sea igual al valor de aux
+                        auxRemove->data = aux->data;
+                        // asignamos al apuntador del lado izquierrdo de auxRemove el apuntador del lado izquierdo de aux
+                        auxRemove->left = aux->left;
+                        // borramos aux
+                        delete aux;
+                        // return true
+                        return true;
+                    // else
+                    } else {
+                        // -> no es nulo, aun no encontramos el más grande del lado izquierdo
+                        // Creamos un apuntador auxDad igual a aux
+                        TNode<T>* auxDad = aux;
+                        // asignamos a aux el valor del apuntador del lado derecho de aux
+                        aux = aux->right;
+                        // iteramos mientras el apuntador del lado derecho de aux no sea nulos
+                        while (aux->right != nullptr) {
+                            // recorremos auxDad a aux
+                            auxDad = aux;
+                            // recorremos aux al apuntador del lado derecho de aux
+                            aux = aux->right;
+                        // endwhile
+                        }
+                        // hacemos que el valor de auxRemove sea igual al valor de aux
+                        auxRemove->data = aux->data;
+                        // asignamos al apuntador del lado derecho de auxDad el apuntador del lado izquierdo de aux
+                        auxDad->right = aux->left;
+                        // boramos aux
+                        delete aux;
+                        // regresamos true
+                        return true;
+                    // endif
+                    }
+                }
+                break;
+            default:
+                break;
+            // endswitch
             }
+        // else
         } else {
-            // no es root el valor a borrar
+            // -> no es root el valor a borrar
             // creamos un apuntador aux papa igual a root
-            TNode<T>* aux_papa = root;
+            TNode<T>* auxDad = root;
             // creamos un apuntador aux igual a root
             TNode<T>* aux = root;
             // iteramos mientras aux sea diferente de nulos
             while (aux != nullptr) {
                 // validamos si el valor a borrar es menor que el valor de aux
                 if (data < aux->data) {
-                    // sí es menor
+                    // -> sí es menor
                     // recorremos aux a la izquierda de aux
-                    aux_papa = aux;
                     aux = aux->left;
+                // else
                 } else {
-                    // es mayor o igual
+                    // -> es mayor o igual
                     // recorremos aux a la derecha de aux
-                    aux_papa = aux;
                     aux = aux->right;
+                // endif
                 }
-                // validamos si el valor de aux es el valor a borrar
-                if (aux != nullptr && aux->data == data) {
-                    // sí es el valor a borrar
-                    // validamos cuantos hijos tiene
-                    switch (howManyChildren(aux)) {
-                        // No tiene hijos
-                        case 0:
+                // validamos si aux es diferente de nulos
+                if (aux != nullptr) {
+                    // validamos si el valor de aux es el valor a borrar
+                    if (data == aux->data) {
+                        // -> sí es el valor a borrar
+                        // validamos cuantos hijos tiene
+                        int children = howManyChildren(aux);
+                        // hacemos un switch con los hijos
+                        switch (children) {
+                        case 0: {
+                        // -> No tiene hijos
                             // validamos si el valor de aux es menor al valor de aux papa
-                            if (aux->data < aux_papa->data) {
-                                // sí es menor
+                            if (aux->data < auxDad->data) {
+                                // -> sí es menor
                                 // el apuntador de lado izquierdo de aux papa es nulos
-                                aux_papa->left = nullptr;
+                                auxDad->left = nullptr;
+                            // else
                             } else {
-                                // no es menor
+                                // -> no es menor
                                 // el apuntador de lado derecho de aux papa es nulos
-                                aux_papa->right = nullptr;
+                                auxDad->right = nullptr;
+                            //endif
                             }
                             // borramos aux
                             delete aux;
                             // regresamos true
                             return true;
+                        }
+                        break;
                         // Tiene 1 hijo
-                        case 1:
+                        case 1: {
                             // validamos si el valor de aux es menor al valor de aux papa
-                            if (aux->data < aux_papa->data) {
-                                // sí es menor
+                            if (aux->data < auxDad->data) {
+                                // -> sí es menor
                                 // validamos si el valor del lado izquierdo de aux es nulos
-                                if (aux->left != nullptr) {
-                                    // el lado izquierdo de aux es nulos (hijo del lado derecho)
+                                if (aux->left == nullptr) {
+                                    // -> el lado izquierdo de aux es nulos (hijo del lado derecho)
                                     // el apuntador del lado izquierdo de aux papa es igual al apuntador de lado derecho de aux
-                                    aux_papa->left = aux->left;
+                                    auxDad->left = aux->right;
+                                // else    
                                 } else {
-                                    // el lado derecho de aux es nulos (hijo del lado izquiedo)
+                                    // ->el lado derecho de aux es nulos (hijo del lado izquiedo)
                                     // el apuntador del lado izquierdo de aux papa es igual al apuntador de lado izquierdo de aux
-                                    aux_papa->left = aux->right;
+                                    auxDad->left = aux->left;
+                                // endif
                                 }
+                            // else
                             } else {
-                                // es mayor o igual
+                                // -> es mayor o igual
                                 // validamos si el valor del lado izquierdo de aux es nulos
-                                if (aux->left != nullptr) {
-                                    // el lado izquierdo de aux es nulos (hijo del lado derecho)
+                                if (aux->left == nullptr) {
+                                    // -> el lado izquierdo de aux es nulos (hijo del lado derecho)
                                     // el apuntador del lado derecho de aux papa es igual al apuntador de lado derecho de aux
-                                    aux_papa->right = aux->left;
+                                    auxDad->right = aux->right;
+                                // else    
                                 } else {
-                                    // el lado derecho de aux es nulos (hijo del lado izquiedo)
+                                    // -> el lado derecho de aux es nulos (hijo del lado izquierdo)
                                     // el apuntador del lado derecho de aux papa es igual al apuntador de lado izquierdo de aux
-                                    aux_papa->right = aux->right;
+                                    auxDad->right = aux->left;
+                                // endif
                                 }
+                            // endif
                             }
                             // boramos aux
                             delete aux;
                             // regresamos true
                             return true;
+                        }
+                        break;
                         // tiene 2 hijos
-                        case 2:
-                            // pendiente
+                        case 2: {
+                            // Creamos un apuntador auxRemove igual a aux
+                            TNode<T>* auxRemove = aux;
+                            // Hacemos aux igual al apuntador del lado izquierdo de auxRemove
+                            aux = auxRemove->left;
+                            // Validamos si el apuntador de aux del lado derecho es nulo
+                            if (aux->right == nullptr) {
+                                // -> si es nulo, ya encontramos el más grande del lado izquierdo
+                                // hacemos que el valor de auxRemove sea igual al valor de aux
+                                auxRemove->data = aux->data;
+                                // asignamos al apuntador del lado izquierdo de auxRemove el apuntador del lado izquierdo de aux
+                                auxRemove->left = aux->left;
+                                // borramos aux
+                                delete aux;
+                                // return true
+                                return true;
+                            // else
+                            } else {
+                                // -> no es nulo, aun no encontramos el más grande del lado izquierdo
+                                // Creamos un apuntador auxDad igual a aux
+                                TNode<T>* auxDad = aux;
+                                // asignamos a aux el valor del apuntador del lado derecho de aux
+                                aux = aux->right;
+                                // iteramos mientras el apuntador del lado derecho de aux no sea nulos
+                                while (aux->right != nullptr) {
+                                    // recorremos auxDad a aux
+                                    auxDad = aux;
+                                    // recorremos aux al apuntador del lado derecho de aux
+                                    aux = aux->right;
+                                // endwhile
+                                }
+                                // hacemos que el valor de auxRemove sea igual al valor de aux
+                                auxRemove->data = aux->data;
+                                // asignamos al apuntador del lado derecho de auxDad el apuntador del lado izquierdo de aux
+                                auxDad->right = aux->left;
+                                // boramos aux
+                                delete aux;
+                                // regresamos true
+                                return true;
+                            // endif
+                            }
+                        }
+                        break;                        
+                        default:
                             break;
+                        // endswitch
+                        }
+                    // else
+                    } else {
+                        // -> no es el valor a borrar
+                        // hacemos aux papa igual a aux
+                        auxDad = aux;
+                    // endif
                     }
+                // endif -> aux es diferente de nulos
                 }
+            // endwhile
             }
+            // -> no encontramos el valor a borrar
+            // regresamos false
+            return false;
+        // endif
         }
+        return false;
+    // else -> si el bst está vacío
+    } else {
+        // return false
+        return false;
+    // endif
     }
-    return false;
+}
+
+template <class T>
+void BST<T>::preOrder(TNode<T>* aux) {
+    // condición de control
+    if (aux != nullptr) {
+        // Visita el nodo raíz
+        cout << aux->data << " ";
+        // hago el preOrder del sub arbol izquierdo
+        preOrder(aux->left);
+        // hago el preOrder del sub arbol derecho
+        preOrder(aux->right);
+    }
+}
+
+template <class T>
+void BST<T>::inOrder(TNode<T>* aux) {
+    // condición de control
+    if (aux != nullptr) {
+        // hago el preOrder del sub arbol izquierdo
+        inOrder(aux->left);
+        // Visita el nodo raíz
+        cout << aux->data << " ";
+        // hago el preOrder del sub arbol derecho
+        inOrder(aux->right);
+    }
+}
+
+template <class T>
+void BST<T>::postOrder(TNode<T>* aux) {
+    // condición de control
+    if (aux != nullptr) {
+        // hago el preOrder del sub arbol izquierdo
+        postOrder(aux->left);
+        // hago el preOrder del sub arbol derecho
+        postOrder(aux->right);
+        // Visita el nodo raíz
+        cout << aux->data << " ";
+    }
+}
+
+template <class T>
+void BST<T>::levelByLevel(TNode<T>* aux) {
+    //validamo si que el arbol no este vacío
+    if (!empty()) {
+        // creamos una fila de tipo apuntador de tipo TNode<T> 
+        queue< TNode<T>* > q;
+        // agregamos a la fila aux
+        q.push(aux);
+        // iteramos mientras la fila no este vacía
+        while (!q.empty()) {
+            // imprimimos el primer elemento de la fila
+            aux = q.front();
+            cout << aux->data << " ";
+            // sacamos el primer elemento de la fila
+            q.pop();
+            // agreamos los hijos del elemento que acabamos de sacar de la fila si es que existen
+            if (aux->left != nullptr) {
+                q.push(aux->left);
+            }
+            if (aux->right != nullptr) {
+                q.push(aux->right);
+            }
+        // endwhile
+        }
+        // imprimimos un salto de renglón
+        cout << endl;
+    }
+}
+    
+    
+
+template <class T>
+void BST<T>::visit(int order) {
+    switch (order)
+    {
+    case 1:
+        preOrder(root);
+        break;
+    case 2:
+        inOrder(root);
+        break;
+    case 3:
+        postOrder(root);
+        break;
+    case 4:
+        levelByLevel(root);
+        break;
+    
+    default:
+        break;
+    }
+    cout << endl;
 }
 
 template<class T>
@@ -284,7 +511,58 @@ void BST<T>::print() {
     }
 } 
 
+template<class T>
+int BST<T>::height() {
+    return heightAux(root);
+}
 
+template<class T>
+int BST<T>::heightAux(TNode<T>* aux) {
+    if (aux == nullptr) {
+        return 0;
+    } else {
+        int left = heightAux(aux->left);
+        int right = heightAux(aux->right);
+        return left > right ? left + 1 : right + 1;
+    }
+}
+
+template<class T>
+void BST<T>::ancestors(T data) {
+    TNode<T>* aux = root;
+    stack<T> s;
+    while (aux != nullptr) {
+        if (data == aux->data) {
+            while (!s.empty()) {
+                cout << s.top() << " ";
+                s.pop();
+            }
+            cout << endl;
+            return;
+        } else {
+            s.push(aux->data);
+            data < aux->data ? aux = aux->left : aux = aux->right;
+        }
+    }
+    cout << "No se encontró el dato" << endl;
+}
+    
+
+
+template<class T>
+int BST<T>::whatLevelAmI(T data) {
+    TNode<T>* aux = root;
+    int level = 0;
+    while (aux != nullptr) {
+        if (data == aux->data) {
+            return level;
+        } else {
+            data < aux->data ? aux = aux->left : aux = aux->right;
+            level++;
+        }
+    }
+    return -1;
+}
 
 
 #endif /* BST_h */
