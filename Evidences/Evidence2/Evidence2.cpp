@@ -24,16 +24,33 @@ Node* partition(Node* low, Node* high) {
     return i;
 }
 
-void quicksort(Node* low, Node* high) {
-    if (low == nullptr || high == nullptr || low == high || low->prev == high) {
-        return;
-    }
-    
-    Node* pivot = partition(low, high);
-    quicksort(low, pivot->prev);
-    quicksort(pivot->next, high);
+
+void quicksort(DoublyLinkedList& A) {
+    Node* low = A.getHead();
+    Node* high = A.getTail();
+    quicksortAux(A, low, high);
 }
 
+void quicksortAux(DoublyLinkedList& A, Node* low, Node* high) {
+    Stack stack;
+    stack.push(low->data);
+    stack.push(high->data);
+
+    while (!stack.empty()) {
+        high = stack.pop();
+        low = stack.pop();
+
+        if (low < high) {
+            Node* pivot = partition(low, high);
+
+            stack.push(low);
+                stack.push(pivot->prev);
+
+            stack.push(pivot->next);
+            stack.push(high);
+        }
+    }
+}
 
 
 int main() {
