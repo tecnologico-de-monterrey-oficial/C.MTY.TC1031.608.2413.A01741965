@@ -150,4 +150,4 @@ void Heap<T>::print() {
     cout << endl;
 }
 
-#endif /* Heap_h */
+#endif 
